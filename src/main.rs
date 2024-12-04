@@ -57,14 +57,14 @@ impl Output {
 
         out_string.push_str(&format!("Path          : {}\n", self.path));
 
-        if let Some(modified) = &self.modified {
-            out_string.push_str(&format!("Updated       : {}\n", modified));
+        if let Some(updated) = &self.updated {
+            out_string.push_str(&format!("Updated       : {}\n", updated));
         }
 
         out_string.push_str(&format!("Created       : {}\n", self.created));
 
-        if let Some(updated) = &self.updated {
-            out_string.push_str(&format!("Modified      : {}\n", updated));
+        if let Some(modified) = &self.modified {
+            out_string.push_str(&format!("Modified      : {}\n", modified));
         }
 
         out_string.push_str(&format!("Accessed      : {}\n", self.accessed));
@@ -125,7 +125,7 @@ fn main() {
                     } else {
                         None
                     },
-                    updated: if created > modified {
+                    updated: if modified_since_created < Duration::zero() {
                         Some(modified.format(datetime_format).to_string())
                     } else {
                         None
