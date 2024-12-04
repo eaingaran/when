@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Duration, Local};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -7,14 +7,19 @@ use std::path::Path;
 use std::process::Command;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    author,
+    version,
+    about = "when - Because 'which' and 'where' just weren't curious enough.",
+    long_about = "which? Please. where? Yawn. It's time to get temporal with when and uncover the timelines of your commands."
+)]
 struct Args {
     command: String,
 
-    #[arg(short, long)]
+    #[arg(short, long, help = "Includes a legend explaining the timestamps.")]
     verbose: bool,
 
-    #[arg(long)]
+    #[arg(long, help = "For easy parsing and integration with other tools.")]
     json: bool,
 }
 
@@ -53,13 +58,13 @@ impl Output {
         out_string.push_str(&format!("Path          : {}\n", self.path));
 
         if let Some(modified) = &self.modified {
-            out_string.push_str(&format!("Updated   : {}\n", modified));
+            out_string.push_str(&format!("Updated       : {}\n", modified));
         }
 
         out_string.push_str(&format!("Created       : {}\n", self.created));
 
         if let Some(updated) = &self.updated {
-            out_string.push_str(&format!("Modified  : {}\n", updated));
+            out_string.push_str(&format!("Modified      : {}\n", updated));
         }
 
         out_string.push_str(&format!("Accessed      : {}\n", self.accessed));
@@ -109,11 +114,13 @@ fn main() {
                 let modified: DateTime<Local> = metadata.modified().unwrap().into();
                 let accessed: DateTime<Local> = metadata.accessed().unwrap().into();
 
+                let modified_since_created = modified.signed_duration_since(created);
+
                 let output: Output = Output {
                     command: args.command,
                     path: command_path,
                     created: created.format(datetime_format).to_string(),
-                    modified: if created < modified {
+                    modified: if modified_since_created > Duration::milliseconds(100) {
                         Some(modified.format(datetime_format).to_string())
                     } else {
                         None
