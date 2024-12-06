@@ -1,0 +1,41 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ["main"]
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: when
+          path: target/release/when
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: when
+          path: target/release/
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/release/when
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
